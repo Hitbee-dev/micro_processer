@@ -4,38 +4,40 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 
-#define	RS_Pin	0x01
-#define	RW_Pin	0x02
-#define	E_Pin	0x04
+#define	RS_Pin	0x01	// H: 데이터	L: 명령
+#define	RW_Pin	0x02	// H: 읽기	L: 쓰기
+#define	E_Pin	0x04	// H: Enable
 
 void lcd_write_instruc (unsigned char instruc){
 	_delay_ms(2);
-	PORTD=PORTD & (~(RS_Pin));      	//it is an instruction rather than data
-	PORTD=PORTD & (~(RW_Pin));      	//it is write operation
-	PORTD=PORTD & (~(E_Pin));       	//set E to 0 (see Figure 1)
-	PORTE=instruc;                  	//put the instruction on the data bus
-	PORTD=PORTD | (E_Pin);            	//set E to 1 (see Figure 1)
-	PORTD=PORTD & (~(E_Pin));       	// set E to 0 to generate a falling edge
+	PORTD=PORTD & (~(RS_Pin));      	// 데이터가 아닌 명령을 줌
+	PORTD=PORTD & (~(RW_Pin));      	// 쓰기 권한 설정
+	PORTD=PORTD & (~(E_Pin));       	// Enable을 0으로 설정
+	PORTE=instruc;                  	// 데이터 버스에 명령을 입력
+	PORTD=PORTD | (E_Pin);            	// Enable을 1으로 설정
+	PORTD=PORTD & (~(E_Pin));       	// Enable을 1 -> 0으로 다시 생성하면서 하강에지 생성
 }
 
 void lcd_init (void){
 	_delay_ms(2);
-	DDRE=0xFF;
 	DDRD=0xFF;
-	lcd_write_instruc(0x06);        	//Increment mode for the cursor
-	lcd_write_instruc(0x0C);        	//The display on, the cursor off
-	lcd_write_instruc(0x38);        	//An 8-bit data bus, two-line display
+	DDRE=0xFF;
+	lcd_write_instruc(0x06);        	// 커서 위치 지정
+	lcd_write_instruc(0x0C);        	// 디스플레이 켜짐, 커서 꺼짐
+	lcd_write_instruc(0x38);        	// 8비트 데이터 버스에, 2라인 디스플레이 설정
 }
 
-void lcd_clear(void){
+void lcd_goto(unsigned char row){
 	_delay_ms(2);
-	lcd_write_instruc(0x01);        	//Clear the display
-	lcd_write_instruc(0x02);        	//returns the display to its original status if it was shifted.
+	if(row==0)
+		lcd_write_instruc(0x80);		//see Figures 4 and 10
+	if(row==1)
+		lcd_write_instruc(0xC0);		//see Figures 4 and 10
 }
 
 void lcd_write_char (unsigned char c){	
 	_delay_ms(2);
-	PORTD=PORTD | (RS_Pin);        		//it is data rather than an instruction
+	PORTD=PORTD | (RS_Pin);        		// 명령이 아닌 데이터를 줌
 	PORTD=PORTD & (~(RW_Pin));
 	PORTD=PORTD & (~(E_Pin));
 	PORTE=c;
@@ -51,22 +53,13 @@ void lcd_write_string(char *s){
 	}
 }
 
-void lcd_goto(unsigned char column, unsigned char row){
-	_delay_ms(2);
-	if(row==0)
-		lcd_write_instruc(0x80 + column);		//see Figures 4 and 10
-	if(row==1)
-		lcd_write_instruc(0xC0+ column);		//see Figures 4 and 10
-}
-
 void main(void)
 {
 	lcd_init();
-	lcd_clear();
-	lcd_goto(0,0);
-	lcd_write_string("    All  About   ");
-	lcd_goto(0,1);
-	lcd_write_string("     Circuits   ");
+	lcd_goto(0);
+	lcd_write_string("  Hello World  ");
+	lcd_goto(1);
+	lcd_write_string(" Micro Processer ");
 	while (1){
         continue;
     }
