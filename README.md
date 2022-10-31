@@ -5,3 +5,12 @@
 
 ## 2022-10-06
 Proteus + Atmega128 Port제어 LED 실습
+
+## 2022-10-13
+Proteus + Atmega128 Port제어 7-Segment 실습
+
+## 2022-10-20
+Proteus + Atmega128 Port제어 LCD 실습
+
+## 2022-11-03
+Proteus + Atmega128 Port제어 Interrupt 실습
